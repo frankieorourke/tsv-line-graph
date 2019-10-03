@@ -1,27 +1,52 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
+
 <style> /* set the CSS */
 
 .line {
   fill: none;
-  stroke: steelblue;
-  stroke-width: 2px;
+  stroke: rgb(95, 19, 236 );
+  stroke-width: 1px;
 }
 
 </style>
 <body>
 
 <!-- load the d3.js library -->    	
-<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="/d3/d3.min.js"></script>
 <script>
 
 // set the dimensions and margins of the graph
 var margin = {top: 20, right: 20, bottom: 30, left: 50},
-    width = 960 - margin.left - margin.right,
+    width = 1200 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
+//localize time etc
+    // https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.js
+
+    var nowDate = new Date();
+    
+    // ES LOCATION
+    // d3.locale Spanish Spain / Español
+
+    var si = {
+        "dateTime": "%a %b %e %X %Y",
+        "date": "%d/%m/%Y",
+        "time": "%H:%M:%S",
+        "periods": ["AM", "PM"],
+        "days": ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
+        "shortDays": ["Dom", "Lun", "Mar", "Mi", "Jue", "Vie", "Sab"],
+        "months": ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
+        "shortMonths": ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+    };
+
+    var santa_ines = d3.timeFormatLocale(si);
+
+    // PARAMS AVAILABLE https://github.com/mbostock/d3/wiki/Time-Formatting
+
+
 // parse the date / time
-var parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%S.%LZ");
+var parseTime = santa_ines.utcParse("%Y-%m-%dT%H:%M:%S.%LZ");
 
 // set the ranges
 var x = d3.scaleTime().range([0, width]);
@@ -44,7 +69,7 @@ var svg = d3.select("body").append("svg")
           "translate(" + margin.left + "," + margin.top + ")");
 
 // Get the data
-d3.tsv("data.txt").then(function(data) {
+d3.tsv("throughput_big.tsv").then(function(data) {
 
   // format the data
   data.forEach(function(d) {
@@ -54,25 +79,45 @@ d3.tsv("data.txt").then(function(data) {
   });
 
   // Scale the range of the data
-  x.domain(d3.extent(data, function(d) { console.log(d.time); return d.time; }));
+  x.domain(d3.extent(data, function(d) {return d.time; }));
   y.domain([d3.min(data, function(d){ return +d.throughput; }), d3.max(data, function(d){return +d.throughput;})]);
 
   // Add the valueline path.
   svg.append("path")
       .data([data])
+      .attr("stroke", "1px")
       .attr("class", "line")
       .attr("d", valueline);
 
-  // Add the X Axis
-  svg.append("g")
+ // Add the X Axis
+ svg.append("g")
       .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x).scale(x));
+      .call(d3.axisBottom(x).scale(x))
+      .append("text")
+      .attr("fill", "#000")
+      .attr("x", (width / 2))
+      .attr("y", height + margin.bottom)
+      .attr("dx", "0.7em")
+      .attr("text-anchor", "end")
+      .text("Time of day");
 
   // Add the Y Axis
   svg.append("g")
-      .call(d3.axisLeft(y).scale(y));
-
+      .call(d3.axisLeft(y).scale(y))
+      .append("text")
+      //.attr("transform" , "rotate(-90)")
+      .attr("fill", "#000")
+      .attr("x", margin.left*2 + 10)
+      .attr("y", 6)
+      .attr("dy", "0.7em")
+      .attr("text-anchor", "end")
+      .text("Todo rendimiento (kBps)");
 });
-
 </script>
+<h1 style="color:rgb(57, 5, 153); font-size:40px; text-align:center;" >
+  Rendimiento de red vs. tiempo
+</br>
+(Network throughput vs. time)
+</h1>
+
 </body>
